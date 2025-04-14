@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wedding Filmmaker Project Management</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #e91e63;
+            margin-bottom: 30px;
+        }
+        .form-container {
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"],
+        input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #e91e63;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #c2185b;
+        }
+        .projects-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        .project-card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-top: 5px solid #e91e63;
+        }
+        .project-header {
+            margin-bottom: 15px;
+        }
+        .project-title {
+            margin: 0;
+            color: #e91e63;
+        }
+        .project-date {
+            color: #666;
+            font-style: italic;
+        }
+        .task-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .task-item {
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+        .task-item:last-child {
+            border-bottom: none;
+        }
+        .task-checkbox {
+            margin-right: 10px;
+        }
+        .task-name {
+            flex-grow: 1;
+        }
+        .completed {
+            text-decoration: line-through;
+            color: #999;
+        }
+        .project-stats {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            font-size: 14px;
+            color: #666;
+        }
+        .clear-btn {
+            background-color: #f44336;
+            margin-top: 20px;
+        }
+        .clear-btn:hover {
+            background-color: #d32f2f;
+        }
+        .chart-container {
+            margin-top: 30px;
+            text-align: center;
+        }
+        #completion-chart {
+            margin: 0 auto;
+            display: block;
+        }
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 0 10px;
+        }
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            margin-right: 5px;
+            border-radius: 3px;
+        }
+        .chart-stats {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Wedding Filmmaker Project Management</h1>
+        
+        <div class="form-container">
+            <div class="form-group">
+                <label for="couple-name">Couple Name:</label>
+                <input type="text" id="couple-name" placeholder="Enter couple name">
+            </div>
+            <div class="form-group">
+                <label for="venue-name">Venue Name:</label>
+                <input type="text" id="venue-name" placeholder="Enter venue name">
+            </div>
+            <div class="form-group">
+                <label for="wedding-date">Wedding Date:</label>
+                <input type="date" id="wedding-date">
+            </div>
+            <button id="add-project-btn">Add Project</button>
+        </div>
+        
+        <div class="projects-container" id="projects-container">
+            <!-- Projects will be added here dynamically -->
+        </div>
+        
+        <button id="clear-completed-btn" class="clear-btn">Clear Completed Projects</button>
+        
+        <div class="chart-container">
+            <h2>Project Completion Statistics</h2>
+            <canvas id="completion-chart" width="300" height="300"></canvas>
+            <div class="chart-legend">
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #4CAF50;"></div>
+                    <span>Completed Projects</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #FFC107;"></div>
+                    <span>Incomplete Projects</span>
+                </div>
+            </div>
+            <div class="chart-stats" id="chart-stats"></div>
+        </div>
+    </div>
+
+    <script>
+        // Project Management Application JavaScript
+        document.addEventListener('DOMContentLoaded', function() {
+            // DOM Elements
+            const coupleNameInput = document.getElementById('couple-name');
+            const venueNameInput = document.getElementById('venue-name');
+            const weddingDateInput = document.getElementById('wedding-date');
+            const addProjectBtn = document.getElementById('add-project-btn');
+            const projectsContainer = document.getElementById('projects-container');
+            const clearCompletedBtn = document.getElementById('clear-completed-btn');
+            const completionChart = document.getElementById('completion-chart');
+            const chartStats = document.getElementById('chart-stats');
+            
+            // Chart colors
+            const CHART_COLORS = {
+                completed: '#4CAF50',  // Green
+                incomplete: '#FFC107'  // Amber
+            };
+            
+            // Default tasks for each wedding project
+            const DEFAULT_TASKS = [
+                'Cull',
+                'Speeches',
+                'Ceremony',
+                'Feature Film',
+                'Short Film'
+            ];
+            
+            // Load projects from localStorage
+            let projects = loadProjects();
+            
+            // Initialize the application
+            init();
+            
+            /**
+             * Initialize the application
+             */
+            function init() {
+                // Set today's date as the minimum date for the wedding date input
+                const today = new Date().toISOString().split('T')[0];
+                weddingDateInput.setAttribute('min', today);
+                
+                // Render existing projects
+                renderProjects();
+                
+                // Render completion chart
+                renderCompletionChart();
+                
+                // Add event listeners
+                addProjectBtn.addEventListener('click', handleAddProject);
+                clearCompletedBtn.addEventListener('click', handleClearCompleted);
+            }
+            
+            /**
+             * Load projects from localStorage
+             * @returns {Array} Array of project objects
+             */
+            function loadProjects() {
+                const storedProjects = localStorage.getItem('weddingProjects');
+                return storedProjects ? JSON.parse(storedProjects) : [];
+            }
+            
+            /**
+             * Save projects to localStorage
+             */
+            function saveProjects() {
+                localStorage.setItem('weddingProjects', JSON.stringify(projects));
+            }
+            
+            /**
+             * Handle adding a new project
+             */
+            function handleAddProject() {
+                // Get input values
+                const coupleName = coupleNameInput.value.trim();
+                const venueName = venueNameInput.value.trim();
+                const weddingDate = weddingDateInput.value;
+                
+                // Validate inputs
+                if (!coupleName) {
+                    alert('Please enter the couple name');
+                    return;
+                }
+                
+                if (!venueName) {
+                    alert('Please enter the venue name');
+                    return;
+                }
+                
+                if (!weddingDate) {
+                    alert('Please select a wedding date');
+                    return;
+                }
+                
+                // Create new project object
+                const newProject = {
+                    id: Date.now().toString(),
+                    coupleName,
+                    venueName,
+                    weddingDate,
+                    tasks: DEFAULT_TASKS.map(taskName => ({
+                        name: taskName,
+                        completed: false,
+                        completedDate: null
+                    })),
+                    createdAt: new Date().toISOString()
+                };
+                
+                // Add project to array
+                projects.push(newProject);
+                
+                // Save to localStorage
+                saveProjects();
+                
+                // Render projects
+                renderProjects();
+                
+                // Update completion chart
+                renderCompletionChart();
+                
+                // Clear form inputs
+                coupleNameInput.value = '';
+                venueNameInput.value = '';
+                weddingDateInput.value = '';
+            }
+            
+            /**
+             * Render all projects
+             */
+            function renderProjects() {
+                // Clear projects container
+                projectsContainer.innerHTML = '';
+                
+                // If no projects, show message
+                if (projects.length === 0) {
+                    const noProjectsMsg = document.createElement('p');
+                    noProjectsMsg.textContent = 'No projects yet. Add a new wedding project to get started!';
+                    noProjectsMsg.style.textAlign = 'center';
+                    noProjectsMsg.style.gridColumn = '1 / -1';
+                    projectsContainer.appendChild(noProjectsMsg);
+                    return;
+                }
+                
+                // Sort projects by wedding date (most recent first)
+                const sortedProjects = [...projects].sort((a, b) => 
+                    new Date(a.weddingDate) - new Date(b.weddingDate)
+                );
+                
+                // Render each project
+                sortedProjects.forEach(project => {
+                    const projectCard = createProjectCard(project);
+                    projectsContainer.appendChild(projectCard);
+                });
+            }
+            
+            /**
+             * Create a project card element
+             * @param {Object} project - Project object
+             * @returns {HTMLElement} Project card element
+             */
+            function createProjectCard(project) {
+                const projectCard = document.createElement('div');
+                projectCard.className = 'project-card';
+                projectCard.dataset.id = project.id;
+                
+                // Format wedding date for display
+                const weddingDate = new Date(project.weddingDate);
+                const formattedDate = weddingDate.toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                
+                // Create project header
+                const projectHeader = document.createElement('div');
+                projectHeader.className = 'project-header';
+                
+                const projectTitle = document.createElement('h3');
+                projectTitle.className = 'project-title';
+                projectTitle.textContent = project.coupleName;
+                
+                const projectVenue = document.createElement('p');
+                projectVenue.textContent = `Venue: ${project.venueName}`;
+                
+                const projectDate = document.createElement('p');
+                projectDate.className = 'project-date';
+                projectDate.textContent = `Wedding Date: ${formattedDate}`;
+                
+                projectHeader.appendChild(projectTitle);
+                projectHeader.appendChild(projectVenue);
+                projectHeader.appendChild(projectDate);
+                
+                // Create task list
+                const taskList = document.createElement('ul');
+                taskList.className = 'task-list';
+                
+                // Add tasks to list
+                project.tasks.forEach((task, index) => {
+                    const taskItem = document.createElement('li');
+                    taskItem.className = 'task-item';
+                    
+                    const checkbox = document.createElement('input');
+                    checkbox.type = 'checkbox';
+                    checkbox.className = 'task-checkbox';
+                    checkbox.checked = task.completed;
+                    checkbox.dataset.taskIndex = index;
+                    
+                    const taskName = document.createElement('span');
+                    taskName.className = `task-name ${task.completed ? 'completed' : ''}`;
+                    taskName.textContent = task.name;
+                    
+                    // Add event listener to checkbox
+                    checkbox.addEventListener('change', function() {
+                        handleTaskStatusChange(project.id, index, this.checked);
+                    });
+                    
+                    taskItem.appendChild(checkbox);
+                    taskItem.appendChild(taskName);
+                    taskList.appendChild(taskItem);
+                });
+                
+                // Create project stats
+                const projectStats = document.createElement('div');
+                projectStats.className = 'project-stats';
+                
+                // Calculate completion percentage
+                const completedTasks = project.tasks.filter(task => task.completed).length;
+                const totalTasks = project.tasks.length;
+                const completionPercentage = Math.round((completedTasks / totalTasks) * 100);
+                
+                // Add completion status
+                const completionStatus = document.createElement('p');
+                completionStatus.textContent = `Completion: ${completionPercentage}% (${completedTasks}/${totalTasks} tasks)`;
+                projectStats.appendChild(completionStatus);
+                
+                // If all tasks are completed, show days to completion
+                if (completedTasks === totalTasks && project.tasks.some(task => task.completedDate)) {
+                    const lastCompletedDate = new Date(Math.max(...project.tasks
+                        .filter(task => task.completedDate)
+                        .map(task => new Date(task.completedDate))));
+                    
+                    const daysToCompletion = Math.round((lastCompletedDate - weddingDate) / (1000 * 60 * 60 * 24));
+                    
+                    const completionInfo = document.createElement('p');
+                    completionInfo.textContent = `Completed ${Math.abs(daysToCompletion)} days ${daysToCompletion >= 0 ? 'after' : 'before'} the wedding`;
+                    projectStats.appendChild(completionInfo);
+                }
+                
+                // Assemble project card
+                projectCard.appendChild(projectHeader);
+                projectCard.appendChild(taskList);
+                projectCard.appendChild(projectStats);
+                
+                return projectCard;
+            }
+            
+            /**
+             * Handle task status change
+             * @param {string} projectId - Project ID
+             * @param {number} taskIndex - Task index
+             * @param {boolean} isCompleted - Whether the task is completed
+             */
+            function handleTaskStatusChange(projectId, taskIndex, isCompleted) {
+                // Find project
+                const projectIndex = projects.findIndex(p => p.id === projectId);
+                
+                if (projectIndex !== -1) {
+                    // Update task status
+                    projects[projectIndex].tasks[taskIndex].completed = isCompleted;
+                    
+                    // Update completion date
+                    if (isCompleted) {
+                        projects[projectIndex].tasks[taskIndex].completedDate = new Date().toISOString();
+                    } else {
+                        projects[projectIndex].tasks[taskIndex].completedDate = null;
+                    }
+                    
+                    // Save to localStorage
+                    saveProjects();
+                    
+                    // Re-render projects
+                    renderProjects();
+                    
+                    // Update completion chart
+                    renderCompletionChart();
+                }
+            }
+            
+            /**
+             * Handle clearing completed projects
+             */
+            function handleClearCompleted() {
+                // Filter out projects where all tasks are completed
+                const incompleteProjects = projects.filter(project => {
+                    return !project.tasks.every(task => task.completed);
+                });
+                
+                // If no projects were removed, show message
+                if (incompleteProjects.length === projects.length) {
+                    alert('No completed projects to clear');
+                    return;
+                }
+                
+                // Update projects array
+                projects = incompleteProjects;
+                
+                // Save to localStorage
+                saveProjects();
+                
+                // Re-render projects
+                renderProjects();
+                
+                // Update completion chart
+                renderCompletionChart();
+                
+                // Show success message
+                alert('Completed projects have been cleared');
+            }
+            
+            /**
+             * Calculate project completion statistics
+             * @returns {Object} Object containing completion statistics
+             */
+            function calculateCompletionStats() {
+                // If no projects, return zeros
+                if (projects.length === 0) {
+                    return {
+                        totalProjects: 0,
+                        completedProjects: 0,
+                        incompleteProjects: 0,
+                        completionPercentage: 0
+                    };
+                }
+                
+                // Count completed projects (all tasks completed)
+                const completedProjects = projects.filter(project => 
+                    project.tasks.every(task => task.completed)
+                ).length;
+                
+                // Calculate statistics
+                const totalProjects = projects.length;
+                const incompleteProjects = totalProjects - completedProjects;
+                const completionPercentage = Math.round((completedProjects / totalProjects) * 100);
+                
+                return {
+                    totalProjects,
+                    completedProjects,
+                    incompleteProjects,
+                    completionPercentage
+                };
+            }
+            
+            /**
+             * Render the completion pie chart
+             */
+            function renderCompletionChart() {
+                // Get completion statistics
+                const stats = calculateCompletionStats();
+                
+                // Update chart stats text
+                chartStats.textContent = `${stats.completedProjects} completed, ${stats.incompleteProjects} in progress (${stats.completionPercentage}% overall completion)`;
+                
+                // Get canvas context
+                const ctx = completionChart.getContext('2d');
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, completionChart.width, completionChart.height);
+                
+                // If no projects, draw empty chart
+                if (stats.totalProjects === 0) {
+                    drawEmptyChart(ctx);
+                    return;
+                }
+                
+                // Draw pie chart
+                drawPieChart(ctx, stats);
+            }
+            
+            /**
+             * Draw an empty chart with a message
+             * @param {CanvasRenderingContext2D} ctx - Canvas context
+             */
+            function drawEmptyChart(ctx) {
+                const centerX = completionChart.width / 2;
+                const centerY = completionChart.height / 2;
+                const radius = Math.min(centerX, centerY) - 10;
+                
+                // Draw empty circle
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.strokeStyle = '#ddd';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw text
+                ctx.font = '16px Arial';
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('No projects yet', centerX, centerY);
+            }
+            
+            /**
+             * Draw a pie chart based on completion statistics
+             * @param {CanvasRenderingContext2D} ctx - Canvas context
+             * @param {Object} stats - Completion statistics
+             */
+            function drawPieChart(ctx, stats) {
+                const centerX = completionChart.width / 2;
+                const centerY = completionChart.height / 2;
+                const radius = Math.min(centerX, centerY) - 10;
+                
+                // Calculate angles
+                const completedAngle = (stats.completedProjects / stats.totalProjects) * 2 * Math.PI;
+                const incompleteAngle = (stats.incompleteProjects / stats.totalProjects) * 2 * Math.PI;
+                
+                // Start at the top (negative y-axis)
+                let startAngle = -Math.PI / 2;
+                
+                // Draw completed segment
+                if (stats.completedProjects > 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, radius, startAngle, startAngle + completedAngle);
+                    ctx.closePath();
+                    ctx.fillStyle = CHART_COLORS.completed;
+                    ctx.fill();
+                    
+                    // Add percentage text if segment is large enough
+                    if (stats.completedProjects / stats.totalProjects > 0.1) {
+                        const textAngle = startAngle + (completedAngle / 2);
+                        const textX = centerX + Math.cos(textAngle) * (radius * 0.6);
+                        const textY = centerY + Math.sin(textAngle) * (radius * 0.6);
+                        
+                        ctx.font = 'bold 16px Arial';
+                        ctx.fillStyle = '#fff';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(`${Math.round((stats.completedProjects / stats.totalProjects) * 100)}%`, textX, textY);
+                    }
+                    
+                    startAngle += completedAngle;
+                }
+                
+                // Draw incomplete segment
+                if (stats.incompleteProjects > 0) {
+                    ctx.beginPath();
+                    ctx.moveTo(centerX, centerY);
+                    ctx.arc(centerX, centerY, radius, startAngle, startAngle + incompleteAngle);
+                    ctx.closePath();
+                    ctx.fillStyle = CHART_COLORS.incomplete;
+                    ctx.fill();
+                    
+                    // Add percentage text if segment is large enough
+                    if (stats.incompleteProjects / stats.totalProjects > 0.1) {
+                        const textAngle = startAngle + (incompleteAngle / 2);
+                        const textX = centerX + Math.cos(textAngle) * (radius * 0.6);
+                        const textY = centerY + Math.sin(textAngle) * (radius * 0.6);
+                        
+                        ctx.font = 'bold 16px Arial';
+                        ctx.fillStyle = '#fff';
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(`${Math.round((stats.incompleteProjects / stats.totalProjects) * 100)}%`, textX, textY);
+                    }
+                }
+                
+                // Draw center circle (optional, for donut chart effect)
+                // ctx.beginPath();
+                // ctx.arc(centerX, centerY, radius * 0.5, 0, 2 * Math.PI);
+                // ctx.fillStyle = '#fff';
+                // ctx.fill();
+            }
+        });
+    </script>
+</body>
+</html>
